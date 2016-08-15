@@ -76,12 +76,12 @@ int NonblockingConnect::Thread()
 
 	}
 
-	std::auto_ptr<CommunicationsChannel> channel(new CommunicationsChannel);
+	std::unique_ptr<CommunicationsChannel> channel(new CommunicationsChannel);
 
 	channel->connect(m_ip);
 	if (channel->isConnected())
 	{
-		m_channel = channel;
+		m_channel = std::move(channel);
 		m_status = Connected;
 		return 0;
 	}

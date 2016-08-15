@@ -363,16 +363,16 @@ private:
 
 private:
 	dialog d;
-	std::auto_ptr<dialog> m_info_dialog;
+	std::unique_ptr<dialog> m_info_dialog;
 	bool m_disconnected;
 };
 
 
 
-auto_ptr<MetaserverClientUi>
+unique_ptr<MetaserverClientUi>
 MetaserverClientUi::Create()
 {
-	return auto_ptr<MetaserverClientUi>(new SdlMetaserverClientUi);
+	return unique_ptr<MetaserverClientUi>(new SdlMetaserverClientUi);
 }
 
 #endif // !defined(DISABLE_NETWORKING)

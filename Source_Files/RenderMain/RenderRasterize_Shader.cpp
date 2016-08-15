@@ -82,6 +82,9 @@ public:
 };
 
 
+RenderRasterize_Shader::RenderRasterize_Shader() : blur(nullptr), RenderRasterizerClass() {}
+RenderRasterize_Shader::~RenderRasterize_Shader() {}
+
 /*
  * initialize some stuff
  * happens once after opengl, shaders and textures are setup
