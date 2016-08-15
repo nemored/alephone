@@ -71,8 +71,8 @@ CommunicationsChannel::CommunicationsChannel()
 	mOutgoingHeaderPosition(0),
 	mOutgoingMessagePosition(0)
 {
-	mTicksAtLastReceive = SDL_GetTicks();
-	mTicksAtLastSend = SDL_GetTicks();
+	mTicksAtLastReceive = machine_tick_count();
+	mTicksAtLastSend = machine_tick_count();
 }
 
 
@@ -89,8 +89,8 @@ CommunicationsChannel::CommunicationsChannel(TCPsocket inSocket)
 	mOutgoingHeaderPosition(0),
 	mOutgoingMessagePosition(0)
 {
-	mTicksAtLastReceive = SDL_GetTicks();
-	mTicksAtLastSend = SDL_GetTicks();
+	mTicksAtLastReceive = machine_tick_count();
+	mTicksAtLastSend = machine_tick_count();
 }
 
 
@@ -129,7 +129,7 @@ CommunicationsChannel::receive_some(TCPsocket inSocket, byte* inBuffer, size_t& 
 		{
 			if(theResult > 0)
 			{
-				mTicksAtLastReceive = SDL_GetTicks();
+				mTicksAtLastReceive = machine_tick_count();
 			}
 	
 			ioBufferPosition += theResult;
@@ -179,7 +179,7 @@ CommunicationsChannel::receive_some(TCPsocket inSocket, byte* inBuffer, size_t& 
 		}
 		if(theResult > 0)
 		{
-			mTicksAtLastReceive = SDL_GetTicks();
+			mTicksAtLastReceive = machine_tick_count();
 		}
 	
 		ioBufferPosition += theResult;
@@ -210,7 +210,7 @@ CommunicationsChannel::send_some(TCPsocket inSocket, byte* inBuffer, size_t& ioB
 	else
 	{
 		if(theResult > 0)
-			mTicksAtLastSend = SDL_GetTicks();
+			mTicksAtLastSend = machine_tick_count();
 		
 		ioBufferPosition += theResult;
 		return (ioBufferPosition == inBufferLength) ? kComplete : kIncomplete;
@@ -469,8 +469,8 @@ CommunicationsChannel::connect(const IPaddress& inAddress)
 	{
 		mConnected = true;
 
-		mTicksAtLastReceive = SDL_GetTicks();
-		mTicksAtLastSend = SDL_GetTicks();
+		mTicksAtLastReceive = machine_tick_count();
+		mTicksAtLastSend = machine_tick_count();
 		
 		MakeTCPsocketNonBlocking(&mSocket);
 	}
@@ -532,18 +532,18 @@ Message*
 CommunicationsChannel::receiveMessage(Uint32 inOverallTimeout, Uint32 inInactivityTimeout)
 {
 	// Here we give a backstop for our inactivity timeout
-	Uint32 theTicksAtStart = SDL_GetTicks();
+	Uint32 theTicksAtStart = machine_tick_count();
 	
-	Uint32 theDeadline = SDL_GetTicks() + inOverallTimeout;
+	Uint32 theDeadline = machine_tick_count() + inOverallTimeout;
 
 	pump();
 
-	while(SDL_GetTicks() - std::max(mTicksAtLastReceive, theTicksAtStart) < inInactivityTimeout
-		&& SDL_GetTicks() < theDeadline
+	while(machine_tick_count() - std::max(mTicksAtLastReceive, theTicksAtStart) < inInactivityTimeout
+		&& machine_tick_count() < theDeadline
 		&& isConnected()
 		&& mIncomingMessages.empty())
 	{
-		SDL_Delay(kSSRPumpInterval);
+		sleep_for_machine_ticks(kSSRPumpInterval);
 		pump();
 	}
 
@@ -569,11 +569,11 @@ CommunicationsChannel::receiveSpecificMessage(
 	Uint32 inInactivityTimeout)
 {
 	Message* theMessage = NULL;
-	Uint32 theDeadline = SDL_GetTicks() + inOverallTimeout;
+	Uint32 theDeadline = machine_tick_count() + inOverallTimeout;
 
-	while(SDL_GetTicks() < theDeadline)
+	while(machine_tick_count() < theDeadline)
 	{
-		theMessage = receiveMessage(theDeadline - SDL_GetTicks(), inInactivityTimeout);
+		theMessage = receiveMessage(theDeadline - machine_tick_count(), inInactivityTimeout);
 		
 		if(theMessage)
 		{
@@ -606,15 +606,15 @@ CommunicationsChannel::flushOutgoingMessages(bool shouldDispatchIncomingMessages
 			    Uint32 inOverallTimeout,
 			    Uint32 inInactivityTimeout)
 {
-	Uint32	theDeadline = SDL_GetTicks() + inOverallTimeout;
-	Uint32	theTicksAtStart = SDL_GetTicks();
+	Uint32	theDeadline = machine_tick_count() + inOverallTimeout;
+	Uint32	theTicksAtStart = machine_tick_count();
 
 	while(isConnected()
 		&& !mOutgoingMessages.empty()
-		&& SDL_GetTicks() < theDeadline
-		&& SDL_GetTicks() - std::max(mTicksAtLastSend, theTicksAtStart) < inInactivityTimeout)
+		&& machine_tick_count() < theDeadline
+		&& machine_tick_count() - std::max(mTicksAtLastSend, theTicksAtStart) < inInactivityTimeout)
 	{
-		SDL_Delay(kFlushPumpInterval);
+		sleep_for_machine_ticks(kFlushPumpInterval);
 		pump();
 		if(shouldDispatchIncomingMessages)
 			dispatchIncomingMessages();
@@ -628,20 +628,20 @@ void CommunicationsChannel::multipleFlushOutgoingMessages(
 	Uint32 inOverallTimeout,
 	Uint32 inInactivityTimeout)
 {
-	Uint32 theDeadline = SDL_GetTicks() + inOverallTimeout;
-	Uint32 theTicksAtStart = SDL_GetTicks();
+	Uint32 theDeadline = machine_tick_count() + inOverallTimeout;
+	Uint32 theTicksAtStart = machine_tick_count();
 
 	bool someoneIsStillActive = true;
 
-	while (SDL_GetTicks() < theDeadline && someoneIsStillActive)
+	while (machine_tick_count() < theDeadline && someoneIsStillActive)
 	{
 		someoneIsStillActive = false;
 
-		SDL_Delay(kFlushPumpInterval);
+		sleep_for_machine_ticks(kFlushPumpInterval);
 
 		for (std::vector<CommunicationsChannel*>::iterator it = channels.begin(); it != channels.end(); it++)
 		{
-			if (!(*it)->mOutgoingMessages.empty() && SDL_GetTicks() - std::max((*it)->mTicksAtLastSend, theTicksAtStart) < inInactivityTimeout)
+			if (!(*it)->mOutgoingMessages.empty() && machine_tick_count() - std::max((*it)->mTicksAtLastSend, theTicksAtStart) < inInactivityTimeout)
 			{
 				someoneIsStillActive = true;
 			}

@@ -156,7 +156,7 @@ int StatsManager::Run(void *pv)
 		}
 		else
 		{
-			SDL_Delay(200);
+			sleep_for_machine_ticks(MACHINE_TICKS_PER_SECOND / 5);
 		}
 		
 	}
