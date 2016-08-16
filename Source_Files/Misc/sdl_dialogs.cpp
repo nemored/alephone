@@ -2190,7 +2190,7 @@ int dialog::run(bool intro_exit_sounds)
 	// Run dialog loop
 	while (!done) {
 		// Process events
-		process_events();
+		process_events(true);
 		if (done)
 			break;
 
@@ -2206,7 +2206,6 @@ int dialog::run(bool intro_exit_sounds)
 
 		// Give time to system
 		global_idle_proc();
-		yield();
 	}
 
 	// Remove dialog from screen
@@ -2273,12 +2272,16 @@ void dialog::start(bool play_sound)
  *  Process pending dialog events
  */
 
-bool dialog::process_events()
+bool dialog::process_events(bool patient)
 {
 	while (!done) {
 		SDL_Event e;
-		if (SDL_PollEvent(&e))
+		// WaitEventTimeout and not WaitEvent just in case something
+		// important is happening in an idle proc
+		if (patient ? SDL_WaitEventTimeout(&e, 1000) : SDL_PollEvent(&e)) {
 			event(e);
+			patient = false;
+                }
 		else
 			break;
 	}
