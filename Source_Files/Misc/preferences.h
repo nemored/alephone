@@ -254,7 +254,7 @@ struct environment_preferences_data
 	bool smooth_text;
 
 	char solo_lua_file[256];
-	bool use_solo_lua;
+	bool use_solo_lua, insecure_solo_lua;
 	bool use_replay_net_lua;
 	bool hide_extensions;
 
