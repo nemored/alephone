@@ -3162,21 +3162,21 @@ void show_movie(short index)
 			SDL_UnlockMutex(movie_audio_mutex);
 		}
 			
-		if (!movie_audio_player || !movie_audio_player->IsActive()) {
-			movie_audio_player = OpenALManager::Get()->PlayStream(movie_audio_callback, specs.channels * specs.samples * 2, specs.freq, specs.channels == 2, AudioFormat::_32_float);
-		}
-		if (vframe)
-		{
-			if (!astream) 
-			{
-				movie_sync = machine_tick_count() - movie_waudio_sync;
+			if (!movie_audio_player || !movie_audio_player->IsActive()) {
+				movie_audio_player = OpenALManager::Get()->PlayStream(movie_audio_callback, specs.freq, specs.channels == 2, AudioFormat::_32_float);
 			}
-			if (!vframe->ready)
+			if (vframe)
 			{
-				SDL_ffmpegGetVideoFrame(sffile, vframe);
-			}
-			else if (vframe->pts <= movie_sync)
-			{
+				if (!astream) 
+				{
+					movie_sync = machine_tick_count() - movie_waudio_sync;
+				}
+				if (!vframe->ready)
+				{
+					SDL_ffmpegGetVideoFrame(sffile, vframe);
+				}
+				else if (vframe->pts <= movie_sync)
+				{
 #ifdef HAVE_OPENGL
 				if (OGL_IsActive())
 				{
