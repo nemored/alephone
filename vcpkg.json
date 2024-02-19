@@ -66,6 +66,9 @@
          "name":"openal-soft"
       },
       {
+         "name":"soxr"
+      },
+      {
          "name":"catch2"
       }
    ],
